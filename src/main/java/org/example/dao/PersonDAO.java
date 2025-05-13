@@ -1,23 +1,38 @@
 package org.example.dao;
 
+import jakarta.persistence.TypedQuery;
 import org.example.model.Person;
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
+import org.hibernate.query.Query;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
-import java.sql.*;
-import java.util.ArrayList;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
+
 
 @Component
 public class PersonDAO {
 
-    private final JdbcTemplate jdbcTemplate;
+    private SessionFactory sessionFactory;
 
-    public PersonDAO(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+    @Autowired
+    public PersonDAO(SessionFactory sessionFactory) {
+        this.sessionFactory = sessionFactory;
     }
 
+//    public PersonDAO(JdbcTemplate jdbcTemplate, SessionFactory sessionFactory) {
+//        this.jdbcTemplate = jdbcTemplate;
+//           }
+
+    @SuppressWarnings("unchecked")
     public List<Person> index() {
 //        List<Person> people = new ArrayList<>();
 //
@@ -38,8 +53,9 @@ public class PersonDAO {
 //            throw new RuntimeException(e);
 //        }
 //        return people;
-
-        return jdbcTemplate.query("select * from person", new BeanPropertyRowMapper<>(Person.class));
+        TypedQuery<Person> query = sessionFactory.getCurrentSession().createQuery("from Person");
+        return query.getResultList();
+        //return jdbcTemplate.query("select * from person", new BeanPropertyRowMapper<>(Person.class));
     }
 
     public Person show(int id) {
@@ -59,8 +75,12 @@ public class PersonDAO {
 //            throw new RuntimeException(e);
 //        }
 //        return person;
-        return jdbcTemplate.query("select * from person where id=?", new Object[]{id}, new BeanPropertyRowMapper<>(Person.class))
-                .stream().findAny().orElse(null);
+
+//        return jdbcTemplate.query("select * from person where id=?", new Object[]{id}, new BeanPropertyRowMapper<>(Person.class))
+//                .stream().findAny().orElse(null);
+
+        Session session = sessionFactory.getCurrentSession();
+        return session.get(Person.class, id);
     }
 
     public void save(Person person) {
@@ -75,7 +95,9 @@ public class PersonDAO {
 //            throw new RuntimeException(e);
 //        }
 
-        jdbcTemplate.update("INSERT INTO person (name, age) VALUES (?, ?)", person.getName(), person.getAge());
+        //   jdbcTemplate.update("INSERT INTO person (name, age) VALUES (?, ?)", person.getName(), person.getAge());
+
+        sessionFactory.getCurrentSession().save(person);
     }
 
 
@@ -90,7 +112,13 @@ public class PersonDAO {
 //        } catch (SQLException e) {
 //            throw new RuntimeException(e);
 //        }
-        jdbcTemplate.update("UPDATE person set name=?, age=? where id=?", updatedPerson.getName(), updatedPerson.getAge(), id);
+
+        Session session = sessionFactory.getCurrentSession();
+        Person person = session.get(Person.class, id);
+        person.setName(updatedPerson.getName());
+        person.setAge(updatedPerson.getAge());
+        session.merge(person);
+
     }
 
     public void delete(int id) {
@@ -100,6 +128,9 @@ public class PersonDAO {
 //        } catch (SQLException e) {
 //            throw new RuntimeException(e);
 //        }
-        jdbcTemplate.update("DELETE FROM person where id=?", id);
+
+
+//        jdbcTemplate.update("DELETE FROM person where id=?", id);
+        sessionFactory.getCurrentSession().remove(show(id));
     }
 }
