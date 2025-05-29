@@ -30,16 +30,24 @@ public class Person implements UserDetails {
     @Column(name = "age")
     private Integer age;
 
-    @Size(min = 2, max = 10, message = "Username should be between 2 and 10 characters")
+    @Size(min = 3, max = 20, message = "Username should be between 3 and 20 characters")
+    @NotEmpty(message = "Username should not be empty")
+    @Column(name = "username", unique = true)
     private String username;
 
-    @Size(min = 2, max = 10, message = "Password should be between 2 and 10 characters")
+    @Size(min = 4, max = 10, message = "Password should be between 4 and 10 characters")
+    @NotEmpty(message = "Password should not be empty")
     private String password;
 
     @Transient
     private String passwordConfirm;
 
     @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "person_roles",
+            joinColumns = @JoinColumn(name = "person_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
     private Set<Role> roles;
 
     public Person() {
@@ -100,7 +108,7 @@ public class Person implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return getRoles();
+        return roles;
     }
 
     @Override

@@ -3,25 +3,29 @@ package org.example.services;
 import org.example.model.Person;
 import org.example.model.Role;
 import org.example.repositories.PeopleRepository;
+import org.example.repositories.RoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @Transactional(readOnly = true)
 public class PeopleService implements UserDetailsService {
     private final PeopleRepository peopleRepository;
+    private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public PeopleService(PeopleRepository peopleRepository) {
+    public PeopleService(PeopleRepository peopleRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
         this.peopleRepository = peopleRepository;
+        this.roleRepository = roleRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public List<Person> findAll() {
@@ -36,13 +40,22 @@ public class PeopleService implements UserDetailsService {
 
     @Transactional
     public void save(Person person) {
-        Person personFromDataBase = peopleRepository.findByUsername(person.getUsername());
 
-        if (personFromDataBase == null) {
-            person.setRoles(Collections.singleton(new Role(1L, "ROLE_USER")));
-            person.setPassword(person.getPassword());
-            peopleRepository.save(person);
+            person.setPassword(passwordEncoder.encode(person.getPassword()));
+
+        Role userRole = roleRepository.findByName("ROLE_USER").orElse(null);
+        if (userRole == null) {
+            userRole = new Role();
+            userRole.setName("ROLE_USER");
+            roleRepository.save(userRole);
         }
+
+        Set<Role> roles = new HashSet<>();
+        roles.add(userRole);
+        person.setRoles(Collections.singleton(userRole));
+
+        peopleRepository.save(person);
+
     }
 
     @Transactional
@@ -53,19 +66,20 @@ public class PeopleService implements UserDetailsService {
 
     @Transactional
     public void delete(int id) {
-        if(peopleRepository.findById(id).isPresent()){
-        peopleRepository.deleteById(id);}
+        if (peopleRepository.findById(id).isPresent()) {
+            peopleRepository.deleteById(id);
+        }
     }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Person person = peopleRepository.findByUsername(username);
+       Optional <Person> person = peopleRepository.findByUsername(username);
 
         if (person == null) {
             throw new UsernameNotFoundException("User not found");
         }
 
-        return person;
+        return person.get();
     }
 
 

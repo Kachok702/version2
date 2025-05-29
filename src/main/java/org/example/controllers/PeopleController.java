@@ -2,6 +2,7 @@ package org.example.controllers;
 
 import org.example.model.Person;
 import org.example.services.PeopleService;
+import org.example.services.RoleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -16,9 +17,11 @@ import javax.validation.Valid;
 public class PeopleController {
 
    private final PeopleService peopleService;
+   private final RoleService roleService;
 
-    public PeopleController(PeopleService peopleService) {
+    public PeopleController(PeopleService peopleService, RoleService roleService) {
         this.peopleService = peopleService;
+        this.roleService = roleService;
     }
 
     @GetMapping()
@@ -51,6 +54,7 @@ public class PeopleController {
     @GetMapping("/{id}/edit")
     public String edit(Model model, @PathVariable("id") int id){
         model.addAttribute("person", peopleService.findOne(id));
+        model.addAttribute("allRoles", roleService.getAllRoles());
         return "people/edit";
     }
 

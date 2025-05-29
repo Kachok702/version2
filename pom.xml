@@ -11,7 +11,7 @@
 
     <properties>
         <spring.version>5.3.30</spring.version>
-           <hibernate.version>5.4.28.Final</hibernate.version>
+        <hibernate.version>5.4.28.Final</hibernate.version>
         <spring.security.version>5.8.6</spring.security.version>
     </properties>
 
