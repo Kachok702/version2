@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Person</title>
+</head>
+<body>
+
+<p th:text="${person.getName()}">VALUE</p>
+<p th:text="${person.getAge()}">VALUE</p>
+<p th:text="${person.getId()}">VALUE</p>
+<p>Roles:
+    <span th:each="role : ${person.roles}" th:text="${role.name} + ' '"></span>
+</p>
+
+<div sec:authorize="hasRole('ADMIN')">
+    <a th:href="@{/people/admin/{id}/edit(id=${person.getId()})}">Edit</a>
+    <form th:method="DELETE" th:action="@{/people/admin/{id}(id=${person.getId()})}">
+        <input type="submit" value="Delete">
+    </form>
+</div>
+
+</body>
+</html>

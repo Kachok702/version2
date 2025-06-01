@@ -9,7 +9,6 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -35,14 +34,11 @@ public class Person implements UserDetails {
     @Column(name = "username", unique = true)
     private String username;
 
-    @Size(min = 4, max = 10, message = "Password should be between 4 and 10 characters")
+    @Size(min = 4, max = 68, message = "Password should be between 4 and 68 characters")
     @NotEmpty(message = "Password should not be empty")
     private String password;
 
-    @Transient
-    private String passwordConfirm;
-
-    @ManyToMany(fetch = FetchType.EAGER)
+     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "person_roles",
             joinColumns = @JoinColumn(name = "person_id"),
@@ -51,6 +47,13 @@ public class Person implements UserDetails {
     private Set<Role> roles;
 
     public Person() {
+    }
+
+    public Person(String name, Integer age, String username, String password) {
+        this.name = name;
+        this.age = age;
+        this.username = username;
+        this.password = password;
     }
 
     public Person(String name, Integer age) {
@@ -90,15 +93,7 @@ public class Person implements UserDetails {
         this.password = password;
     }
 
-    public String getPasswordConfirm() {
-        return passwordConfirm;
-    }
-
-    public void setPasswordConfirm(String passwordConfirm) {
-        this.passwordConfirm = passwordConfirm;
-    }
-
-    public Set<Role> getRoles() {
+        public Set<Role> getRoles() {
         return roles;
     }
 
