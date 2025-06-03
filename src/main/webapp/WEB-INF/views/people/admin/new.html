@@ -27,9 +27,24 @@
     <div style="color:red" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">Password error</div>
     <br/>
 
+    <div>Roles:</div>
+    <div th:each="role : ${allRoles}">
+        <input type="checkbox"
+               name="roles"
+               th:value="${role.id}"
+               th:checked="${person.roles.contains(role)}"
+               th:text="${role.name}">
+    </div>
+    <br/>
+
     <input type="submit" value="Create!">
 
 </form>
-
+<br/><br/>
+<hr>
+<form th:action="@{/logout}" method="post">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+    <button type="submit">Exit system</button>
+</form>
 </body>
 </html>

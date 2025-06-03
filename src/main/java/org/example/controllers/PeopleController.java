@@ -4,7 +4,6 @@ import org.example.model.Person;
 import org.example.model.Role;
 import org.example.services.PeopleService;
 import org.example.services.RoleService;
-import org.example.services.RoleServiceImpl;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Controller;
@@ -15,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Controller
@@ -59,16 +57,25 @@ public class PeopleController {
     }
 
     @GetMapping("/new")
-    public String newPerson(@ModelAttribute("person") Person person) {
+    public String newPerson(Model model) {
+        model.addAttribute("person", new Person());
+        model.addAttribute("allRoles", roleService.getAllRoles());
         return "people/admin/new";
     }
 
     @PostMapping()
     public String create(@ModelAttribute("person") @Valid Person person,
-                         BindingResult bindingResult) {
+                         BindingResult bindingResult, @RequestParam("roles") Set<Long> roleId) {
         if (bindingResult.hasErrors()) {
             return "people/admin/new";
         }
+
+        Set<Role> roles = new HashSet<>();
+        for (Long roleIds : roleId) {
+            roles.add(roleService.getRoleById(roleIds));
+        }
+        person.setRoles(roles);
+
         peopleService.save(person);
         return "redirect:/people/admin";
     }
@@ -84,18 +91,21 @@ public class PeopleController {
     public String update(@ModelAttribute("person") @Valid Person updatedPerson,
                          BindingResult bindingResult,
                          @PathVariable("id") int id,
-                         @RequestParam(value = "role", required = false) List<Long> roleId) {
+                         @RequestParam(value = "roles", required = false) Set<Long> roleIds) {
         if (bindingResult.hasErrors()) {
             return "people/admin/edit";
         }
 
-        if (roleId != null) {
-            Set<Role> roles = new HashSet<>();
-            for (Long roledIds : roleId) {
-                roles.add(roleService.getRoleById(roledIds));
+        Set<Role> roles = new HashSet<>();
+        if (roleIds != null ) {
+                     for (Long roledId : roleIds) {
+                roles.add(roleService.getRoleById(roledId));
             }
-            updatedPerson.setRoles(roles);
+        } else {
+            return "people/admin/edit";
         }
+        updatedPerson.setRoles(roles);
+
         peopleService.update(id, updatedPerson);
         return "redirect:/people/admin";
     }

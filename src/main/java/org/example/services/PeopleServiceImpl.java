@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PostConstruct;
+import javax.persistence.EntityManager;
 import java.util.*;
 
 @Service
@@ -21,12 +22,12 @@ public class PeopleServiceImpl implements PeopleService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Autowired
+      @Autowired
     public PeopleServiceImpl(PeopleRepository peopleRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
         this.peopleRepository = peopleRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
-    }
+       }
 
     public List<Person> findAll() {
         return peopleRepository.findAll();
@@ -43,14 +44,6 @@ public class PeopleServiceImpl implements PeopleService {
 
         person.setPassword(passwordEncoder.encode(person.getPassword()));
 
-        if (person.getRoles() == null || person.getRoles().isEmpty()) {
-            Role userRole = roleRepository.findByName("ROLE_USER").orElse(null);
-            if (userRole == null) {
-                userRole = new Role("ROLE_USER");
-                roleRepository.save(userRole);
-            }
-            person.setRoles(Set.of(userRole));
-        }
         peopleRepository.save(person);
     }
 
@@ -92,10 +85,13 @@ public class PeopleServiceImpl implements PeopleService {
     }
 
     @PostConstruct
-    public void initRoles() {
+    public void init() {
         createRoleIfNotFound("ROLE_ADMIN");
         createRoleIfNotFound("ROLE_USER");
-        createAdminIfNotExists();
+        createUsersIfNotExists("Marsel", 25, "MarselGod", "password", Set.of("ROLE_ADMIN", "ROLE_USER"));
+        createUsersIfNotExists("Liza", 27, "LizaAdmin", "password", Set.of("ROLE_ADMIN"));
+        createUsersIfNotExists("Timur", 44, "TimurUser", "password", Set.of("ROLE_USER"));
+        createUsersIfNotExists("Ivan", 34, "IvanUser", "password", Set.of("ROLE_USER"));
     }
 
     private void createRoleIfNotFound(String name) {
@@ -106,20 +102,22 @@ public class PeopleServiceImpl implements PeopleService {
     }
 
 
-    private void createAdminIfNotExists() {
-        String adminUsername = "admin";
-        if (peopleRepository.findByUsername(adminUsername).isEmpty()) {
-            Person admin = new Person();
-            admin.setUsername(adminUsername);
-            admin.setPassword(passwordEncoder.encode("admin"));
-            admin.setName("Admin");
-            admin.setAge(25);
+    private void createUsersIfNotExists(String name, int age, String username, String password, Set<String> role) {
+        if (peopleRepository.findByUsername(username).isEmpty()) {
+            Person person = new Person();
+            person.setName(name);
+            person.setAge(age);
+            person.setUsername(username);
+            person.setPassword(passwordEncoder.encode(password));
 
-            Role adminRole = roleRepository.findByName("ROLE_ADMIN")
-                    .orElseThrow(() -> new RuntimeException("ROLE_ADMIN not found"));
-            admin.setRoles(Set.of(adminRole));
+            Set<Role> roles = new HashSet<>();
+            for (String roleName : role) {
+                Role role1 = roleRepository.findByName(roleName).orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
+                roles.add(role1);
+            }
 
-            peopleRepository.save(admin);
+            person.setRoles(roles);
+            peopleRepository.save(person);
         }
     }
 }
